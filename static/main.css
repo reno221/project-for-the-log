@@ -1,0 +1,32 @@
+.body {
+    background: white;
+    display: grid;
+    height: 60rem;
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-gap: 1rem;
+    overflow: auto;
+    }
+   
+.topL {
+    background-color: lightgray;
+    overflow: auto;
+    }
+   
+.topR {
+    background-color: lightgray;
+    overflow: auto;
+    }
+
+.downL{
+  background-color:lightgray;
+  overflow: auto;
+  }
+
+.downR{
+  background-color: lightgray;
+  overflow: auto;
+}
+
+
