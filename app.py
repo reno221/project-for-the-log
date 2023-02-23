@@ -1,18 +1,44 @@
+import os
+import time
+import sys
+import logging
+try:
+    from pygtail import Pygtail
+except:
+    os.system('pip3 install pygtail')
+    from pygtail import Pygtail
+
 from flask import Flask, render_template, Response, request #flask imports
 from robotLibrary import Robot #import custom made robotLib class for abstraction
 from camera import CameraStream #imports "camerastream" class from 'camera.py' file located in the same dir as this app.py file
 import cv2 #opencv import
 
 
+direction = 'None'
+
 app = Flask(__name__) #initialize flask object instance
 robot = Robot() #initialize robot class instance
 cap = CameraStream().start() #initialize camerastream object instance from other file
 
+app.config["SECRET_KEY"] = "SECRETKEYSECRETKEYSECRETKEYSECRETKEYSECRETKEY"
+app.config["DEBUG"] = os.environ.get("FLASK_DEBUG", True)
+app.config["JSON_AS_ASCII"] = False
+
+
+LOG_FILE = 'app.log'
+log = logging.getLogger('__name__')
+logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
 #flask run --host=0.0.0.0
 
 
 
 #below is robot-control related endpoints and functions
+
+
+@app.route('/')
+def entry_point():
+    log.info("route =>'/env' - hit!")
+    return render_template('base.html')
 
 @app.route("/forward", methods = ['GET','POST'])
 def forward():
@@ -20,6 +46,7 @@ def forward():
     speedR = int(request.args.get('speedR', default = 64))
     timeMS = int(request.args.get('timeMS', default = 1000))
     robot.motorForward(speedL, speedR, timeMS)
+    direction = 'Forward......'
     return "<p>forward</p>"
 
 
@@ -29,6 +56,7 @@ def backward():
     speedR = int(request.args.get('speedR', default = 66))
     timeMS = int(request.args.get('timeMS', default = 1000))
     robot.motorBackward(speedL, speedR, timeMS)
+    direction = 'Backward......'
     return "<p>backward</p>"
 
 @app.route("/left", methods = ['GET','POST'])
@@ -37,6 +65,7 @@ def left():
     speedR = int(request.args.get('speedR', default = 60))
     timeMS = int(request.args.get('timeMS', default = 850)) 
     robot.motorLeft(speedL, speedR, timeMS)
+    direction = 'Left......'
     return "<p>left</p>"
 
 @app.route("/right", methods = ['GET','POST'])
@@ -45,8 +74,41 @@ def right():
     speedR = int(request.args.get('speedR', default = 60))
     timeMS = int(request.args.get('timeMS', default = 850))
     robot.motorRight(speedL, speedR, timeMS)
+    direction = 'Right......'
     return "<p>right</p>"
 
+
+@app.route('/progress')
+def progress():
+    def generate():
+        x = 0
+        while x <= 100:
+            yield "data:" + str(x) + "\n\n"
+            x = x + 10
+            time.sleep(0.5)
+    return Response(generate(), mimetype='text/event-stream')
+
+
+@app.route('/log')
+def progress_log():
+
+    def generate():
+        # for line in Pygtail(LOG_FILE, every_n=1):
+        while True:
+            yield "data:" + direction + "\n\n"
+            # yield direction
+            time.sleep(0.5)
+    return Response(generate(), mimetype='text/event-stream')
+
+
+@app.route('/env')
+def show_env():
+    log.info("route =>'/env' - hit")
+    env = {}
+    for k, v in request.environ.items():
+        env[k] = str(v)
+    log.info("route =>'/env' [env]:\n%s" % env)
+    return env
 
 
 
